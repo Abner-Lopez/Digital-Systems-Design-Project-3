@@ -1,0 +1,16 @@
+# yosys.ys - script optimizado for the cache project
+read_verilog -sv design/cache.sv \
+                 design/main_memory_bram.sv \
+                 design/memory_hierarchy.sv \
+                 design/processor.sv \
+                 design/top.sv
+
+hierarchy -check -top top
+proc
+opt
+fsm
+opt
+memory
+opt
+synth_gowin -top top -json build/top.json
+stat
