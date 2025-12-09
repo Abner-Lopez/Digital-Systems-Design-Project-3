@@ -1047,3 +1047,74 @@ El bloque final orquesta la ejecución global de la simulación.
 2.  **Información:** Ejecuta `print_mapping_table` para mostrar la configuración al usuario.
 3.  **Ejecución:** Mantiene la simulación activa durante **160 ciclos**, cubriendo toda la secuencia de prueba del procesador.
 4.  **Terminación:** Invoca `$finish` para concluir la simulación ordenadamente.
+
+## Resultados de simulación
+
+### Resumen General
+La simulación ejecutó la secuencia de accesos definida por el `processor` y comprobó el comportamiento de la jerarquía de memoria (caché direct-mapped de 1 KiB con bloques de 32 B y main memory de 65 KiB).  
+Los puntos clave (miss, refill, hit, writeback, eviction) ocurrieron en el orden esperado y los datos se verificaron correctamente. En concreto:
+
+- Primer acceso a `0x0004` → **MISS** → refill desde `mem_block[0]`.  
+- Acceso a `0x0008` → **HIT** (misma línea).  
+- Escritura a `0x0004` → **HIT**, dato `0xDEADBEEF` almacenado en caché (dirty).  
+- Acceso a `0x8004` → **MISS**, detecta `dirty` y realiza **writeback** del bloque antiguo, luego **refill** del bloque nuevo.  
+- Acceso posterior a `0x8004` → **HIT** y dato leído coincide con memoria principal.
+
+---
+
+### Log resumido (salida de consola)
+
+### Tabla de Mapeo (direcciones usadas)
+| Dirección | TAG | INDEX | OFFSET |
+|-----------|-----:|------:|-------:|
+| 0x0004    | 0x00 | 0x00  | 0x04  |
+| 0x0008    | 0x00 | 0x00  | 0x08  |
+| 0x8004    | 0x20 | 0x00  | 0x04  |
+| 0x2118    | 0x08 | 0x08  | 0x18  |
+| 0x211c    | 0x08 | 0x08  | 0x1c  |
+| 0x403c    | 0x10 | 0x01  | 0x1c  |
+| 0x7f00    | 0x1f | 0x18  | 0x00  |
+
+---
+
+### Snapshots importantes (inspector)
+**Después de la escritura (C8)**  
+- Línea 0 contiene la palabra `DEADBEEF` en la segunda palabra del bloque (palabra 1).  
+- Estado: `V=1`, `D=1`, `TAG=0x00`.  
+- Interpretación: la escritura se realizó en caché y marcó la línea como sucia (correcto).
+
+**Después de la sustitución y refill (post C15)**  
+- Línea 0 ahora contiene el bloque proveniente de `mem_block[1024]` (patrón `0x10000000 + w`).  
+- Estado: `V=1`, `D=0`, `TAG=0x20`.  
+- Interpretación: el bloque sucio fue escrito a memoria (writeback) y la nueva línea fue rellenada correctamente (refill), dirty limpiado.
+
+---
+
+### Verificaciones automáticas hechas en el TB
+- Comparación explícita en C8: lectura devolvió `0xDEADBEEF` → **OK** (pasa).  
+- Impresiones de writeback: se observó la petición de bloque a memoria y la escritura/lectura de los bloques correctos (índices 0 y 1024).  
+- Estado V/D/Tag actualizado correctamente en inspector.
+
+---
+
+### Checklist final (estado de la verificación)
+- [x] Preload de memoria principal correcto (bloques 0 y 1024).  
+- [x] Miss inicial en 0x0004 y refill desde memoria.  
+- [x] Hit posterior en 0x0008 (misma línea).  
+- [x] Escritura en caché y marcado Dirty en 0x0004.  
+- [x] Eviction de línea sucia al acceder 0x8004 (writeback observado).  
+- [x] Refill del nuevo bloque desde memoria principal.  
+- [x] Hit final en 0x8004 con dato correcto leído.  
+
+**Conclusión:** la simulación confirma que la caché y la FSM implementan correctamente la política Write-Back con refill y evicción, y que los datos se mantienen coherentes.
+
+---
+
+### Reproducción de archivo para visualizar 
+- Archivo VCD generado: `tb_top.vcd`  
+## Waveform (VCD)
+
+El archivo de formas de onda está disponible aquí:
+
+[tb_top.vcd](sim/tb_top.vcd)
+
