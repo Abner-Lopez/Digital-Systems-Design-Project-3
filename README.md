@@ -737,7 +737,7 @@ endmodule
 
 ```
 
-## Testbench tb_top.sv
+## Testbench `tb_top.sv`
 Este testbench verifica el funcionamiento completo de la jerarquía de memoria del proyecto (Processor - Cache - FSM - Main Memory).  
 
 ```systemverilog
