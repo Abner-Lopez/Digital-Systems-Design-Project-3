@@ -10,8 +10,8 @@ Este repositorio contiene el tercer proyecto del curso Diseño de Sistemas Digit
 |------------------------------|----------|
 | Espinoza Hernández Melanie   |2022039189|
 | López Méndez Abner           |2022273075|
-| Salas Alvarado Aaron         |        |
-| Villalta Ramírez Anthony     |        |
+| Salas Alvarado Aaron         |2022437501|
+| Villalta Ramírez Anthony     |2022133951|
 
 
 ## Módulo cache.sv
