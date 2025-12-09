@@ -1097,7 +1097,7 @@ Los puntos clave (miss, refill, hit, writeback, eviction) ocurrieron en el orden
 
 ---
 
-### Checklist final (estado de la verificación)
+### Estado de la verificación (final)
 - [x] Preload de memoria principal correcto (bloques 0 y 1024).  
 - [x] Miss inicial en 0x0004 y refill desde memoria.  
 - [x] Hit posterior en 0x0008 (misma línea).  
@@ -1109,12 +1109,41 @@ Los puntos clave (miss, refill, hit, writeback, eviction) ocurrieron en el orden
 **Conclusión:** la simulación confirma que la caché y la FSM implementan correctamente la política Write-Back con refill y evicción, y que los datos se mantienen coherentes.
 
 ---
+  ## Formas de Onda — Funcionamiento de la Jerarquía de Memoria
 
-### Reproducción de archivo para visualizar 
-- Archivo VCD generado: `tb_top.vcd`  
-## Waveform (VCD)
+A continuación se muestra una captura del archivo `tb_top.vcd` donde se observa la secuencia completa de accesos generada por el procesador:
 
-El archivo de formas de onda está disponible aquí:
+![Señal del GTKWave](señal.png)
 
-[tb_top.vcd](sim/tb_top.vcd)
+### Interpretación de la forma de onda
+
+1. **Ciclo 2 — READ 0x0004**  
+   - `HIT = 0` → *Miss inicial*  
+   - Se solicita un refill del bloque.
+
+2. **Ciclo 4 — READ 0x0008**  
+   - `HIT = 1` → *Hit esperado*  
+   - El bloque ya estaba en caché.
+
+3. **Ciclo 6 — WRITE 0x0004 (DEADBEEF)**  
+   - `HIT = 1`  
+   - El dato `DEADBEEF` se escribe correctamente en la línea 0.
+
+4. **Ciclo 10 — READ 0x8004**  
+   - `HIT = 0` → *Miss + evicción sucia*  
+   - Se escribe el bloque modificado a memoria.  
+   - Luego se carga el bloque nuevo desde `0x8000`.
+
+5. **Ciclo 15 — READ 0x8004 (post-refill)**  
+   - `HIT = 1`  
+   - `read_data = 10000001`  
+   - Confirma el refill correcto y la operación completa de la jerarquía.
+
+### Señales monitoreadas
+- `dbg_address`: dirección actual solicitada  
+- `dbg_hit`: resultado de hit/miss  
+- `dbg_read_data`: dato devuelto por la caché/memoria  
+- `idx_now`, `tag_now`, `off_now`: decodificación de la dirección  
+- `last_addr`, `last_hit`: detectan cambios en accesos  
+
 
