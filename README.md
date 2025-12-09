@@ -7,9 +7,9 @@ Este repositorio contiene el tercer proyecto del curso Diseño de Sistemas Digit
 ## Integrantes del Proyecto
 
 | Nombre Completo              | Carné |
-|------------------------------|--------|
-| Espinoza Hernández Melanie   |        |
-| López Méndez Abner           |        |
+|------------------------------|----------|
+| Espinoza Hernández Melanie   |2022039189|
+| López Méndez Abner           |2022273075|
 | Salas Alvarado Aaron         |        |
 | Villalta Ramírez Anthony     |        |
 
